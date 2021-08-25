@@ -86,6 +86,37 @@ app.post("/api/register", async (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.post("/api/change-password", async (req, res) => {
+  const { token, newpassword } = req.body;
+
+  if (typeof newpassword !== "string") {
+    return res.json({ status: "error", error: "Invalid password" });
+  }
+
+  if (newpassword.length < 5) {
+    return res.json({
+      status: "error",
+      error: "Password too small, it should have more than 5 characters",
+    });
+  }
+
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    const _id = user.id;
+    const hashedPassword = await bcrypt.hash(newpassword, 10);
+
+    await User.updateOne(
+      { _id },
+      {
+        $set: { password: hashedPassword },
+      }
+    );
+    return res.json({ status: "ok" });
+  } catch (error) {
+    res.json({ status: "error", error: "?" });
+  }
+});
+
 app.listen(9999, () => {
   console.log("Server up at 9999");
 });
